@@ -4,7 +4,6 @@ const github = require('@actions/github');
 async function run() {
   try {
     const jiraProjectKey = core.getInput('jira-project-key', { required: true });
-    const jiraIssueUrl = core.getInput('jira-issue-url', { required: true });
     const token = core.getInput('github-token', { required: true });
 
     const octokit = github.getOctokit(token);
@@ -29,11 +28,10 @@ async function run() {
     const issueNumber = match[1];
     const remainingText = match[2].trim();
     const jiraIssueNumber = `${jiraProjectKey}-${issueNumber}`;
-    const jiraUrl = `${jiraIssueUrl}/browse/${jiraIssueNumber}`;
-    const jiraLink = `🔗 Jira: [${jiraIssueNumber}](${jiraUrl})`;
+    const jiraLink = `🔗 Jira: [${jiraIssueNumber}]`;
 
     const newTitle = remainingText ? `${jiraIssueNumber} ${remainingText}` : jiraIssueNumber;
-    const newBody = body.includes(jiraUrl)
+    const newBody = body.includes(jiraIssueNumber)
       ? body
       : body.length > 0
         ? `${body}\n\n${jiraLink}`
@@ -48,7 +46,7 @@ async function run() {
     }
 
     core.info(`Renaming: "${title}" → "${newTitle}"`);
-    core.info(`Adding Jira link: ${jiraUrl}`);
+    core.info(`Adding Jira link: ${jiraLink}`);
 
     await octokit.rest.pulls.update({
       owner: context.repo.owner,
@@ -59,7 +57,7 @@ async function run() {
     });
 
     core.setOutput('jira-issue-number', jiraIssueNumber);
-    core.setOutput('jira-url', jiraUrl);
+    core.setOutput('jira-url', jiraLink);
     core.setOutput('new-title', newTitle);
 
   } catch (error) {
